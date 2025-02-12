@@ -1,0 +1,10 @@
+# Ignore build artifacts and temporary files
+/Binaries/
+/Intermediate/
+/DerivedDataCache/
+/Saved/
+
+# Ignore logs and temporary files
+*.log
+*.tmp
+*.db
