@@ -39,24 +39,26 @@ USFCDataContainer* USFCDataManageUtilities::UpdateDataContainer(USFCDataContaine
 }
 
 // FString을 FGenericData로, FString 내부 json 형태의 key는 정확히 맞아야 함
-bool USFCDataManageUtilities::StringToSFCDataStruct(const FString& InString, FGenericData& InDataStruct)
+FGenericData USFCDataManageUtilities::StringToSFCDataStruct(const FString& InString)
 {
+	FGenericData ReturnData = FGenericData();
+
     if (InString.IsEmpty())
     {
         UE_LOG(LogTemp, Error, TEXT("ConvertJsonToGenericData: Input JSON string is empty."));
-        return false;
+        return ReturnData;
     }
 
     // Convert FString to FGenericData using JsonObjectStringToUStruct
-    if (FJsonObjectConverter::JsonObjectStringToUStruct<FGenericData>(InString, &InDataStruct))
+    if (FJsonObjectConverter::JsonObjectStringToUStruct<FGenericData>(InString, &ReturnData))
     {
         UE_LOG(LogTemp, Log, TEXT("Successfully converted JSON to FGenericData."));
-        return true;
+        return ReturnData;
     }
     else
     {
         UE_LOG(LogTemp, Error, TEXT("Failed to convert JSON to FGenericData."));
-        return false;
+        return FGenericData();
     }
 }
 

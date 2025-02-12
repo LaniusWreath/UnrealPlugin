@@ -30,11 +30,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SFC|DataManagement|Container")
 	static USFCDataContainer* UpdateDataContainer(USFCDataContainer* InContainer, const FGenericData& InData);
 
-	UFUNCTION(BlueprintCallable, Category = "SFC|DataManagement|Container")
-	static bool StringToSFCDataStruct(const FString& InString, FGenericData& InDataStruct);
-
-
 	// ------------------------------ UtilityFunction ------------------------------------
+
+	UFUNCTION(BlueprintCallable, Category = "SFC|DataManagement|Utility")
+	static FGenericData StringToSFCDataStruct(const FString& InString);
+
 	UFUNCTION(BlueprintCallable, Category = "SFC|DataManagement|Utility")
 	static TMap<FString, FString> ParseJsonStringToMap(const FString& JsonString);
 
