@@ -49,7 +49,7 @@ void AFactoryGizmo::ShowDebugArea()
     FVector MinPoint = FVector(FMath::Min(StartPoint.X, EndPoint.X) - Offset.X * CellSize, FMath::Min(StartPoint.Y, EndPoint.Y) - Offset.Y * CellSize, 
         0 - Offset.Z * CellSize);
     FVector MaxPoint = FVector(FMath::Max(StartPoint.X, EndPoint.X) + Offset.X * CellSize, FMath::Max(StartPoint.Y, EndPoint.Y) + Offset.Y * CellSize,
-        EndPoint.Z+ (UpperOffsetZ+Offset.Z) * CellSize * (FloorCount-1) + UpperOffsetZ);
+        EndPoint.Z+ (UpperOffsetZ+Offset.Z) * CellSize * (FloorCount-1) + UpperOffsetZ*CellSize);
 
     FVector Center = (MinPoint + MaxPoint) / 2;
     FVector BoxExtent = (MaxPoint - MinPoint) / 2;  // BoxExtent는 절반 크기
@@ -233,7 +233,7 @@ void AFactoryGizmo::SpawnCornerAt(const FVector& InLocation, const FRotator& InR
         return;
     }
 
-    UStaticMesh* SelectedMesh = GetRandomMesh(CenterModules);
+    UStaticMesh* SelectedMesh = GetRandomMesh(CornerModules);
     if (!SelectedMesh)
     {
         return;
