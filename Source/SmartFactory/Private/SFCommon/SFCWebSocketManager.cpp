@@ -87,8 +87,13 @@ void USFCWebSocketManager::OnMessageReceived(const FString& Message)
 	{
 		OnMessageReceivedDelegate.Execute(Message);
 	}
+
 	// 다이나믹 델리게이트는 무조건 브로드캐스트
-	OnMessageReceivedEvent.Broadcast(Message);
+	if (OnMessageReceivedEvent.IsBound())
+	{
+		OnMessageReceivedEvent.Broadcast(Message);
+	}
+	
 }
 
 // 서버에 메시지 송신.

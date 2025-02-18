@@ -33,7 +33,7 @@ protected:
 	TSharedPtr<FJsonObject> ParsedJsonData;
 
 	// Main Request Function
-	
+
 	// Request work delegate binding functions
 	virtual void OnResponseReceivedWithString(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful); // with string
 	virtual void OnResponseReceivedWithPtr(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful); // with objectptr
@@ -59,13 +59,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
 	static USFCHttpManager* CreateHttpManagerInstance(UObject* Outer, TSubclassOf<USFCHttpManager> ManagerClass);
 
+	// ---------------------------------------------- Get ---------------------------------------------
+
 	// RequestFunction only URL
 	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
 	virtual void MakeGetRequest(const FString& Url, const bool GetResultWithFString = true);
 
 	// Reqeust Function URL with Header
 	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
-	virtual void MakeGetRequestWithHeader(const FString& Url, const TMap<FString, FString>& Headers, 
+	virtual void MakeGetRequestWithHeader(const FString& Url, const TMap<FString, FString>& Headers,
 		const TMap<FString, FString>& Parameters, const bool GetResultWithFString = true);
 
 	// Return Serialized JsonString member
@@ -74,6 +76,15 @@ public:
 	{
 		return ResultResponseString;
 	}
+
+	// -------------------------------------------- Post ---------------------------------------------
+
+	void MakePostRequest(const FString& Url, const TMap<FString, FString>& Headers, const FString& PostData, bool GetResultWithFString);
+	FString CreateJsonString(const TMap<FString, FString>& DataMap);
+
+	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
+	void SendPostRequest(const FString& URL, const TMap<FString, FString>& InHeaders, const TMap<FString, FString> InData);
+
 
 public:
 
