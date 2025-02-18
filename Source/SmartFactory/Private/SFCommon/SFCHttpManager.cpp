@@ -85,6 +85,68 @@ void USFCHttpManager::MakeGetRequestWithHeader(const FString& Url, const TMap<FS
 	Request->ProcessRequest();
 }
 
+// ---------------------------------------------------- POST --------------------------------------------------------
+
+void USFCHttpManager::MakePostRequest(const FString& Url, const TMap<FString, FString>& Headers, const FString& PostData, bool GetResultWithFString)
+{
+	FHttpModule* Http = &FHttpModule::Get();
+	if (!Http) return;
+
+	// 요청 생성
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
+	Request->SetURL(Url);
+	Request->SetVerb(TEXT("POST"));  // POST 요청 설정
+	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));  // JSON 데이터 전송
+
+	// 사용자 정의 헤더 추가
+	for (const TPair<FString, FString>& Header : Headers)
+	{
+		Request->SetHeader(Header.Key, Header.Value);
+	}
+
+	// POST 데이터 설정
+	Request->SetContentAsString(PostData);
+
+	// 응답 바인딩
+	if (GetResultWithFString)
+	{
+		Request->OnProcessRequestComplete().BindUObject(this, &USFCHttpManager::OnResponseReceivedWithString);
+	}
+	else
+	{
+		Request->OnProcessRequestComplete().BindUObject(this, &USFCHttpManager::OnResponseReceivedWithPtr);
+	}
+
+	// 요청 실행
+	Request->ProcessRequest();
+
+}
+
+
+FString USFCHttpManager::CreateJsonString(const TMap<FString, FString>& DataMap)
+{
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+
+	for (const TPair<FString, FString>& Pair : DataMap)
+	{
+		JsonObject->SetStringField(Pair.Key, Pair.Value);
+	}
+
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+
+	return OutputString;
+}
+
+void USFCHttpManager::SendPostRequest(const FString& URL, const TMap<FString, FString>& InHeaders, const TMap<FString, FString> InData)
+{
+	FString JsonData = CreateJsonString(InData);
+
+	// POST 요청 실행
+	MakePostRequest(URL, InHeaders, JsonData, true);
+}
+
 //------------------------------------------------------------------------------------------------------------//
 
 // Request 응답 바인딩 함수 : 문자열로 요청했을 경우
