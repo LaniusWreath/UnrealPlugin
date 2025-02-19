@@ -85,6 +85,68 @@ void USFCHttpManager::MakeGetRequestWithHeader(const FString& Url, const TMap<FS
 	Request->ProcessRequest();
 }
 
+// ---------------------------------------------------- POST --------------------------------------------------------
+
+void USFCHttpManager::MakePostRequest(const FString& Url, const TMap<FString, FString>& Headers, const FString& PostData, bool GetResultWithFString)
+{
+	FHttpModule* Http = &FHttpModule::Get();
+	if (!Http) return;
+
+	// 요청 생성
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
+	Request->SetURL(Url);
+	Request->SetVerb(TEXT("POST"));  // POST 요청 설정
+	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));  // JSON 데이터 전송
+
+	// 사용자 정의 헤더 추가
+	for (const TPair<FString, FString>& Header : Headers)
+	{
+		Request->SetHeader(Header.Key, Header.Value);
+	}
+
+	// POST 데이터 설정
+	Request->SetContentAsString(PostData);
+
+	// 응답 바인딩
+	if (GetResultWithFString)
+	{
+		Request->OnProcessRequestComplete().BindUObject(this, &USFCHttpManager::OnResponseReceivedWithString);
+	}
+	else
+	{
+		Request->OnProcessRequestComplete().BindUObject(this, &USFCHttpManager::OnResponseReceivedWithPtr);
+	}
+
+	// 요청 실행
+	Request->ProcessRequest();
+
+}
+
+
+FString USFCHttpManager::CreateJsonString(const TMap<FString, FString>& DataMap)
+{
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+
+	for (const TPair<FString, FString>& Pair : DataMap)
+	{
+		JsonObject->SetStringField(Pair.Key, Pair.Value);
+	}
+
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+
+	return OutputString;
+}
+
+void USFCHttpManager::SendPostRequest(const FString& URL, const TMap<FString, FString>& InHeaders, const TMap<FString, FString> InData)
+{
+	FString JsonData = CreateJsonString(InData);
+
+	// POST 요청 실행
+	MakePostRequest(URL, InHeaders, JsonData, true);
+}
+
 //------------------------------------------------------------------------------------------------------------//
 
 // Request 응답 바인딩 함수 : 문자열로 요청했을 경우
@@ -94,10 +156,10 @@ void USFCHttpManager::OnResponseReceivedWithString(FHttpRequestPtr Request, FHtt
 	if (bWasSuccessful && Response.IsValid())
 	{
 		// 결과는 HttpHandler 인스턴스의 ResultResponseString에 저장.
-		FString TempResponseString = Response->GetContentAsString();
+		TempResultResponseString = Response->GetContentAsString();
 
 		// 전체 결과 중 data 필드에 해당하는 값만 떼어내 저장
-		ResultResponseString = USFCDataManageUtilities::ExtractDataFieldFromJsonString(TempResponseString);
+		ResultResponseString = USFCDataManageUtilities::ExtractDataFieldFromJsonString(TempResultResponseString);
 
 		// 델리게이트에 바인딩된 함수가 있을때만 execute() : cpp 전용
 		if (OnRequestedJsonStringReady.IsBound())
