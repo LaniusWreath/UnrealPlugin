@@ -25,14 +25,14 @@ USFCWebSocketManager* USFCWebSocketManager::CreateWebSocketManagerInstance(UObje
 }
 
 // 웹소켓 연결 초기화 및 연결 함수 바인딩.
-void USFCWebSocketManager::Connect(const FString& ServcerAddress)
+void USFCWebSocketManager::Connect(const FString& ServerAddress)
 {
 	if (WebSocket && WebSocket->IsConnected())
 	{
 		Disconnect();
 	}
 
-	WebSocket = FWebSocketsModule::Get().CreateWebSocket(ServcerAddress);
+	WebSocket = FWebSocketsModule::Get().CreateWebSocket(ServerAddress);
 
 	// 함수 바인딩.
 	WebSocket->OnConnected().AddUObject(this, &USFCWebSocketManager::OnConnected);
@@ -54,7 +54,6 @@ void USFCWebSocketManager::Disconnect()
 	if (WebSocket->IsConnected())
 	{
 		WebSocket->Close();
-		WebSocket.Reset();
 	}
 }
 
@@ -71,6 +70,11 @@ void USFCWebSocketManager::OnError(const FString& ErrorMessage)
 void USFCWebSocketManager::OnClosed(int32 StatusCode, const FString& Reason, bool bWasClean)
 {
 	UE_LOG(SFClog, Log, TEXT("WebSocket closed. Reason: %s"), *Reason);
+	// 연결 해제 후 안전하게 WebSocket 객체 초기화
+	if (WebSocket)
+	{
+		WebSocket.Reset();
+	}
 }
 
 // 메시지 받았을 때 바인딩 
