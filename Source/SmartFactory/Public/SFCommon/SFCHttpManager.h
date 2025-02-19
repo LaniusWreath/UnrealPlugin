@@ -32,6 +32,11 @@ protected:
 	FString ResultResponseString;
 	TSharedPtr<FJsonObject> ParsedJsonData;
 
+	FString TempResultResponseString;
+
+	int32 TimeoutCount=0;
+	int32 MaxTimeoutCount = 2;
+
 	// Main Request Function
 
 	// Request work delegate binding functions
@@ -77,14 +82,24 @@ public:
 		return ResultResponseString;
 	}
 
+	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
+	const FString& GetTempResultResponseString()
+	{
+		return TempResultResponseString;
+	}
+
+
 	// -------------------------------------------- Post ---------------------------------------------
 
-	void MakePostRequest(const FString& Url, const TMap<FString, FString>& Headers, const FString& PostData, bool GetResultWithFString);
+	void SendPostRequest(const FString& Url, const TMap<FString, FString>& Headers, const FString& PostData, bool GetResultWithFString);
+
 	FString CreateJsonString(const TMap<FString, FString>& DataMap);
 
-	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
-	void SendPostRequest(const FString& URL, const TMap<FString, FString>& InHeaders, const TMap<FString, FString> InData);
+	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP", meta = (AdvancedDisplay = "bTimerOn,TimerInterval"))
+	void MakePostRequest(const FString& URL, const TMap<FString, FString>& InHeaders, const TMap<FString, FString> InData);
 
+
+	FString ConvertTMapToJson(const TMap<FString, FString>& DataMap);
 
 public:
 

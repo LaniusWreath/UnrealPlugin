@@ -24,6 +24,18 @@ USFCWebSocketManager* USFCWebSocketManager::CreateWebSocketManagerInstance(UObje
 	return NewObject<USFCWebSocketManager>(Outer, ManagerClass);
 }
 
+bool USFCWebSocketManager::IsConnected()
+{
+	if (WebSocket)
+	{
+		return WebSocket->IsConnected();
+	}
+	else
+	{
+		return false;
+	}
+}
+
 // 웹소켓 연결 초기화 및 연결 함수 바인딩.
 void USFCWebSocketManager::Connect(const FString& ServerAddress)
 {
@@ -75,6 +87,7 @@ void USFCWebSocketManager::OnClosed(int32 StatusCode, const FString& Reason, boo
 	{
 		WebSocket.Reset();
 	}
+
 }
 
 // 메시지 받았을 때 바인딩 

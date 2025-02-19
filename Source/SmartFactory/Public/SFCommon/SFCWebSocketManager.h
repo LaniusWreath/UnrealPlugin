@@ -51,6 +51,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SFC|WebSocket")
 	static USFCWebSocketManager* CreateWebSocketManagerInstance(UObject* Outer, TSubclassOf<USFCWebSocketManager> ManagerClass );
 
+	UFUNCTION(BlueprintPure, Category = "SFC|WebSocket")
+	bool IsConnected();
+
 public:
 	// Blueprint Expose Delegate
 	UPROPERTY(BlueprintAssignable)
