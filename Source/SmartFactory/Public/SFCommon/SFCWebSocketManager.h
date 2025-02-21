@@ -24,6 +24,8 @@ private:
 
 protected:
 
+	FString TempResultResponseString;
+
 	// ----------------------------- Binding functions ---------------------------------
 	
 	// Connection event binding
@@ -53,6 +55,12 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "SFC|WebSocket")
 	bool IsConnected();
+
+	UFUNCTION(BlueprintPure, Category = "SFC|HTTP")
+	const FString& GetTempResultResponseString()
+	{
+		return TempResultResponseString;
+	}
 
 public:
 	// Blueprint Expose Delegate

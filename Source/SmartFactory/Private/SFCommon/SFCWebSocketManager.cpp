@@ -95,6 +95,11 @@ void USFCWebSocketManager::OnMessageReceived(const FString& Message)
 {
 	UE_LOG(LogTemp, Log, TEXT("WebSocketManager: Message received: %s"), *Message);
 
+	if (!Message.IsEmpty())
+	{
+		TempResultResponseString = Message;
+	}
+
 	// 델리게이트가 바인딩되어 있으면 메시지 전달
 	if (OnMessageReceivedDelegate.IsBound())
 	{
