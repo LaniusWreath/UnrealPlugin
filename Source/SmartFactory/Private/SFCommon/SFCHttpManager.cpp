@@ -181,9 +181,11 @@ FString USFCHttpManager::ConvertTMapToJson(const TMap<FString, FString>& DataMap
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
 	if (FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer))
 	{
+		UE_LOG(SFClog, Log, TEXT("Converted Post Jsot Data : %s"), *OutputString);
 		return OutputString; 
 	}
 
+	UE_LOG(SFClog, Error, TEXT("Converted failed"));
 	return TEXT("{}");
 }
 
@@ -220,14 +222,14 @@ void USFCHttpManager::OnResponseReceivedWithString(FHttpRequestPtr Request, FHtt
 		TempResultResponseString = Response->GetContentAsString();
 
 		// 전체 결과 중 data 필드에 해당하는 값만 떼어내 저장
-		ResultResponseString = USFCDataManageUtilities::ExtractDataFieldFromJsonString(TempResultResponseString);
+		//ResultResponseString = USFCDataManageUtilities::ExtractDataFieldFromJsonString(TempResultResponseString);
 
 		// 델리게이트에 바인딩된 함수가 있을때만 execute() : cpp 전용
 		if (OnRequestedJsonStringReady.IsBound())
 		{
 			OnRequestedJsonStringReady.Execute();
 		}
-		// 다이나믹 델리게이트는 조건 없이 Broadcast
+		// 다이나믹 델리게이트는 조건 없이 
 		OnDynamicRequestingEvent.Broadcast();
 	}
 	else

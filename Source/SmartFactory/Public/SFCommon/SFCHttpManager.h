@@ -76,13 +76,13 @@ public:
 		const TMap<FString, FString>& Parameters, const bool GetResultWithFString = true);
 
 	// Return Serialized JsonString member
-	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
+	UFUNCTION(BlueprintPure, Category = "SFC|HTTP")
 	const FString& GetResultResponseString()
 	{
 		return ResultResponseString;
 	}
 
-	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
+	UFUNCTION(BlueprintPure, Category = "SFC|HTTP")
 	const FString& GetTempResultResponseString()
 	{
 		return TempResultResponseString;
