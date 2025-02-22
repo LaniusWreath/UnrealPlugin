@@ -106,16 +106,16 @@ void USFCHttpManager::SendPostRequest(const FString& Url, const TMap<FString, FS
 	Request->SetVerb(TEXT("POST"));  // POST 요청 설정
 	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));  // JSON 데이터 전송
 
-	// 사용자 정의 헤더 추가
+	// Override My header
 	for (const TPair<FString, FString>& Header : Headers)
 	{
 		Request->SetHeader(Header.Key, Header.Value);
 	}
 
-	// POST 데이터 설정
+	// Set Post Data
 	Request->SetContentAsString(PostData);
 
-	// 응답 바인딩
+	// Bind Response Delegates
 	if (GetResultWithFString)
 	{
 		Request->OnProcessRequestComplete().BindUObject(this, &USFCHttpManager::OnResponseReceivedWithString);
@@ -125,9 +125,14 @@ void USFCHttpManager::SendPostRequest(const FString& Url, const TMap<FString, FS
 		Request->OnProcessRequestComplete().BindUObject(this, &USFCHttpManager::OnResponseReceivedWithPtr);
 	}
 
-	// 요청 실행
+	// Do Request
 	Request->ProcessRequest();
 
+	// Save Current Request
+	CurrentRequest = Request;
+
+	// Cancle if timer end
+	GetWorld()->GetTimerManager().SetTimer(CancleTimerHandle, this, &USFCHttpManager::CancelHttpRequest, 5.0f, false);
 }
 
 
@@ -145,6 +150,17 @@ void USFCHttpManager::MakePostRequest(const FString& URL, const TMap<FString, FS
 
 	SendPostRequest(URL, InHeaders, JsonData, true);
 }
+
+// Cancle if request response delayed
+void USFCHttpManager::CancelHttpRequest()
+{
+	if (CurrentRequest.IsValid() && CurrentRequest->GetStatus() == EHttpRequestStatus::Processing)
+	{
+		UE_LOG(SFClog, Warning, TEXT("Request Timeout: Cancelling Request"));
+		CurrentRequest->CancelRequest();
+	}
+}
+
 
 FString USFCHttpManager::ConvertTMapToJson(const TMap<FString, FString>& DataMap)
 {
@@ -176,12 +192,11 @@ FString USFCHttpManager::ConvertTMapToJson(const TMap<FString, FString>& DataMap
 		}
 	}
 
-	// JSON을 문자열로 변환
+	// Json to String
 	FString OutputString;
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
 	if (FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer))
 	{
-		UE_LOG(SFClog, Log, TEXT("Converted Post Jsot Data : %s"), *OutputString);
 		return OutputString; 
 	}
 
@@ -216,6 +231,8 @@ void USFCHttpManager::OnResponseReceivedWithString(FHttpRequestPtr Request, FHtt
 	// 응답 데이터 확인.
 	if (bWasSuccessful && Response.IsValid())
 	{
+		GetWorld()->GetTimerManager().ClearTimer(CancleTimerHandle);
+
 		TimeoutCount = 0;
 
 		// 결과는 HttpHandler 인스턴스의 ResultResponseString에 저장.
@@ -244,6 +261,8 @@ void USFCHttpManager::OnResponseReceivedWithPtr(FHttpRequestPtr Request, FHttpRe
 {
 	if (bWasSuccessful && Response.IsValid())
 	{
+		GetWorld()->GetTimerManager().ClearTimer(CancleTimerHandle);
+
 		TimeoutCount = 0;
 
 		// 응답 데이터 확인

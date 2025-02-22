@@ -26,7 +26,6 @@ class SMARTFACTORY_API USFCHttpManager : public UObject
 {
 	GENERATED_BODY()
 
-private:
 
 protected:
 	FString ResultResponseString;
@@ -34,8 +33,15 @@ protected:
 
 	FString TempResultResponseString;
 
+	FTimerHandle CancleTimerHandle;
+
 	int32 TimeoutCount=0;
 	int32 MaxTimeoutCount = 2;
+
+	// Current Request Pointer
+	TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> CurrentRequest;
+
+protected:
 
 	// Main Request Function
 
@@ -51,6 +57,8 @@ protected:
 
 	// Json Object -> TMap<FString, FString>
 	static TMap<FString, FString> ParseJsonObjToMap(const TSharedPtr<FJsonObject> OriginJsonObject);
+
+	
 
 public:
 	// Delegate for Alarming Request Done, Data Ready
@@ -100,6 +108,10 @@ public:
 
 
 	FString ConvertTMapToJson(const TMap<FString, FString>& DataMap);
+
+
+	// Cancle
+	void CancelHttpRequest();
 
 public:
 
