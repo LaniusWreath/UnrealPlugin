@@ -47,6 +47,14 @@ void USFCHttpManager::MakeGetRequestWithHeader(const FString& Url, const TMap<FS
 	FHttpModule* Http = &FHttpModule::Get();
 	if (!Http) return;
 
+	TimeoutCount++;
+
+	if (TimeoutCount > MaxTimeoutCount)
+	{
+		UE_LOG(SFClog, Error, TEXT("GetRequest Queue is full"));
+		return;
+	}
+
 	// URL에 파라미터 추가
 	FString FinalUrl = Url;
 	if (Parameters.Num() > 0)
@@ -85,7 +93,137 @@ void USFCHttpManager::MakeGetRequestWithHeader(const FString& Url, const TMap<FS
 	Request->ProcessRequest();
 }
 
+// ---------------------------------------------------- POST --------------------------------------------------------
+
+void USFCHttpManager::SendPostRequest(const FString& Url, const TMap<FString, FString>& Headers, const FString& PostData, bool GetResultWithFString)
+{
+	FHttpModule* Http = &FHttpModule::Get();
+	if (!Http) return;
+
+	// 요청 생성
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
+	Request->SetURL(Url);
+	Request->SetVerb(TEXT("POST"));  // POST 요청 설정
+	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));  // JSON 데이터 전송
+
+	// Override My header
+	for (const TPair<FString, FString>& Header : Headers)
+	{
+		Request->SetHeader(Header.Key, Header.Value);
+	}
+
+	// Set Post Data
+	Request->SetContentAsString(PostData);
+
+	// Bind Response Delegates
+	if (GetResultWithFString)
+	{
+		Request->OnProcessRequestComplete().BindUObject(this, &USFCHttpManager::OnResponseReceivedWithString);
+	}
+	else
+	{
+		Request->OnProcessRequestComplete().BindUObject(this, &USFCHttpManager::OnResponseReceivedWithPtr);
+	}
+
+	// Do Request
+	Request->ProcessRequest();
+
+	// Save Current Request
+	CurrentRequest = Request;
+
+	// Cancle if timer end
+	GetWorld()->GetTimerManager().SetTimer(CancleTimerHandle, this, &USFCHttpManager::CancelHttpRequest, 5.0f, false);
+}
+
+
+void USFCHttpManager::MakePostRequest(const FString& URL, const TMap<FString, FString>& InHeaders, const TMap<FString, FString> InData)
+{
+	TimeoutCount++;
+
+	if (TimeoutCount > MaxTimeoutCount)
+	{
+		UE_LOG(SFClog, Error, TEXT("PostRequest Queue is full"));
+		return;
+	}
+
+	FString JsonData = ConvertTMapToJson(InData);
+
+	SendPostRequest(URL, InHeaders, JsonData, true);
+}
+
+// Cancle if request response delayed
+void USFCHttpManager::CancelHttpRequest()
+{
+	if (CurrentRequest.IsValid() && CurrentRequest->GetStatus() == EHttpRequestStatus::Processing)
+	{
+		UE_LOG(SFClog, Warning, TEXT("Request Timeout: Cancelling Request"));
+		CurrentRequest->CancelRequest();
+	}
+}
+
+
+FString USFCHttpManager::ConvertTMapToJson(const TMap<FString, FString>& DataMap)
+{
+
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+
+	for (const TPair<FString, FString>& Pair : DataMap)
+	{
+		FString Key = Pair.Key;
+		FString Value = Pair.Value;
+
+		if (Value.Equals("true", ESearchCase::IgnoreCase))
+		{
+			JsonObject->SetBoolField(Key, true);
+		}
+		else if (Value.Equals("false", ESearchCase::IgnoreCase))
+		{
+			JsonObject->SetBoolField(Key, false);
+		}
+
+		else if (Value.IsNumeric())
+		{
+			JsonObject->SetNumberField(Key, FCString::Atof(*Value));
+		}
+
+		else
+		{
+			JsonObject->SetStringField(Key, Value);
+		}
+	}
+
+	// Json to String
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	if (FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer))
+	{
+		return OutputString; 
+	}
+
+	UE_LOG(SFClog, Error, TEXT("Converted failed"));
+	return TEXT("{}");
+}
+
+
 //------------------------------------------------------------------------------------------------------------//
+
+FString USFCHttpManager::CreateJsonString(const TMap<FString, FString>& DataMap)
+{
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+
+	for (const TPair<FString, FString>& Pair : DataMap)
+	{
+		JsonObject->SetStringField(Pair.Key, Pair.Value);
+	}
+
+	FString OutputString;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+	FJsonSerializer::Serialize(JsonObject.ToSharedRef(), Writer);
+
+	UE_LOG(SFClog, Log, TEXT("CreateJsonString : %s"), *OutputString);
+	return OutputString;
+}
+
 
 // Request 응답 바인딩 함수 : 문자열로 요청했을 경우
 void USFCHttpManager::OnResponseReceivedWithString(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful)
@@ -93,23 +231,28 @@ void USFCHttpManager::OnResponseReceivedWithString(FHttpRequestPtr Request, FHtt
 	// 응답 데이터 확인.
 	if (bWasSuccessful && Response.IsValid())
 	{
+		GetWorld()->GetTimerManager().ClearTimer(CancleTimerHandle);
+
+		TimeoutCount = 0;
+
 		// 결과는 HttpHandler 인스턴스의 ResultResponseString에 저장.
-		FString TempResponseString = Response->GetContentAsString();
+		TempResultResponseString = Response->GetContentAsString();
 
 		// 전체 결과 중 data 필드에 해당하는 값만 떼어내 저장
-		ResultResponseString = USFCDataManageUtilities::ExtractDataFieldFromJsonString(TempResponseString);
+		//ResultResponseString = USFCDataManageUtilities::ExtractDataFieldFromJsonString(TempResultResponseString);
 
 		// 델리게이트에 바인딩된 함수가 있을때만 execute() : cpp 전용
 		if (OnRequestedJsonStringReady.IsBound())
 		{
 			OnRequestedJsonStringReady.Execute();
 		}
-		// 다이나믹 델리게이트는 조건 없이 Broadcast
+		// 다이나믹 델리게이트는 조건 없이 
 		OnDynamicRequestingEvent.Broadcast();
 	}
 	else
 	{
 		UE_LOG(SFClog, Error, TEXT("%s : HTTP Request failed."), *this->GetName());
+		TimeoutCount++;
 	}
 }
 
@@ -118,6 +261,10 @@ void USFCHttpManager::OnResponseReceivedWithPtr(FHttpRequestPtr Request, FHttpRe
 {
 	if (bWasSuccessful && Response.IsValid())
 	{
+		GetWorld()->GetTimerManager().ClearTimer(CancleTimerHandle);
+
+		TimeoutCount = 0;
+
 		// 응답 데이터 확인
 		ResultResponseString = Response->GetContentAsString();
 

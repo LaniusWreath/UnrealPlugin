@@ -24,6 +24,18 @@ USFCWebSocketManager* USFCWebSocketManager::CreateWebSocketManagerInstance(UObje
 	return NewObject<USFCWebSocketManager>(Outer, ManagerClass);
 }
 
+bool USFCWebSocketManager::IsConnected()
+{
+	if (WebSocket)
+	{
+		return WebSocket->IsConnected();
+	}
+	else
+	{
+		return false;
+	}
+}
+
 // 웹소켓 연결 초기화 및 연결 함수 바인딩.
 void USFCWebSocketManager::Connect(const FString& ServerAddress)
 {
@@ -75,6 +87,7 @@ void USFCWebSocketManager::OnClosed(int32 StatusCode, const FString& Reason, boo
 	{
 		WebSocket.Reset();
 	}
+
 }
 
 // 메시지 받았을 때 바인딩 
@@ -82,13 +95,23 @@ void USFCWebSocketManager::OnMessageReceived(const FString& Message)
 {
 	UE_LOG(LogTemp, Log, TEXT("WebSocketManager: Message received: %s"), *Message);
 
+	if (!Message.IsEmpty())
+	{
+		TempResultResponseString = Message;
+	}
+
 	// 델리게이트가 바인딩되어 있으면 메시지 전달
 	if (OnMessageReceivedDelegate.IsBound())
 	{
 		OnMessageReceivedDelegate.Execute(Message);
 	}
+
 	// 다이나믹 델리게이트는 무조건 브로드캐스트
-	OnMessageReceivedEvent.Broadcast(Message);
+	if (OnMessageReceivedEvent.IsBound())
+	{
+		OnMessageReceivedEvent.Broadcast(Message);
+	}
+	
 }
 
 // 서버에 메시지 송신.

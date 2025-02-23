@@ -26,14 +26,25 @@ class SMARTFACTORY_API USFCHttpManager : public UObject
 {
 	GENERATED_BODY()
 
-private:
 
 protected:
 	FString ResultResponseString;
 	TSharedPtr<FJsonObject> ParsedJsonData;
 
+	FString TempResultResponseString;
+
+	FTimerHandle CancleTimerHandle;
+
+	int32 TimeoutCount=0;
+	int32 MaxTimeoutCount = 2;
+
+	// Current Request Pointer
+	TSharedPtr<IHttpRequest, ESPMode::ThreadSafe> CurrentRequest;
+
+protected:
+
 	// Main Request Function
-	
+
 	// Request work delegate binding functions
 	virtual void OnResponseReceivedWithString(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful); // with string
 	virtual void OnResponseReceivedWithPtr(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful); // with objectptr
@@ -47,6 +58,8 @@ protected:
 	// Json Object -> TMap<FString, FString>
 	static TMap<FString, FString> ParseJsonObjToMap(const TSharedPtr<FJsonObject> OriginJsonObject);
 
+	
+
 public:
 	// Delegate for Alarming Request Done, Data Ready
 	FOnJsonObjectReceivedDelegate OnParsedJsonObjectPtrReady;
@@ -59,21 +72,46 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
 	static USFCHttpManager* CreateHttpManagerInstance(UObject* Outer, TSubclassOf<USFCHttpManager> ManagerClass);
 
+	// ---------------------------------------------- Get ---------------------------------------------
+
 	// RequestFunction only URL
 	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
 	virtual void MakeGetRequest(const FString& Url, const bool GetResultWithFString = true);
 
 	// Reqeust Function URL with Header
 	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
-	virtual void MakeGetRequestWithHeader(const FString& Url, const TMap<FString, FString>& Headers, 
+	virtual void MakeGetRequestWithHeader(const FString& Url, const TMap<FString, FString>& Headers,
 		const TMap<FString, FString>& Parameters, const bool GetResultWithFString = true);
 
 	// Return Serialized JsonString member
-	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP")
+	UFUNCTION(BlueprintPure, Category = "SFC|HTTP")
 	const FString& GetResultResponseString()
 	{
 		return ResultResponseString;
 	}
+
+	UFUNCTION(BlueprintPure, Category = "SFC|HTTP")
+	const FString& GetTempResultResponseString()
+	{
+		return TempResultResponseString;
+	}
+
+
+	// -------------------------------------------- Post ---------------------------------------------
+
+	void SendPostRequest(const FString& Url, const TMap<FString, FString>& Headers, const FString& PostData, bool GetResultWithFString);
+
+	FString CreateJsonString(const TMap<FString, FString>& DataMap);
+
+	UFUNCTION(BlueprintCallable, Category = "SFC|HTTP", meta = (AdvancedDisplay = "bTimerOn,TimerInterval"))
+	void MakePostRequest(const FString& URL, const TMap<FString, FString>& InHeaders, const TMap<FString, FString> InData);
+
+
+	FString ConvertTMapToJson(const TMap<FString, FString>& DataMap);
+
+
+	// Cancle
+	void CancelHttpRequest();
 
 public:
 

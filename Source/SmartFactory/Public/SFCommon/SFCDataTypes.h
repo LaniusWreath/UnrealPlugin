@@ -16,13 +16,13 @@ struct FGenericData
 {
     GENERATED_BODY()
 
-    UPROPERTY(BlueprintReadWrite, Category = "SFC|Data")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFC|Data")
     FString Key;
 
-    UPROPERTY(BlueprintReadWrite, Category = "SFC|Data")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFC|Data")
     FString Value;
 
-    UPROPERTY(BlueprintReadWrite, Category = "SFC|Data")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFC|Data")
     TMap<FString, FString> Attributes;
 
     FGenericData() :
@@ -35,13 +35,13 @@ struct FJSONData
 {
     GENERATED_BODY()
 
-    UPROPERTY(BlueprintReadWrite, Category = "SFC|Data")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFC|Data")
     TMap<FString, FString> StringFields;
 
-    UPROPERTY(BlueprintReadWrite, Category = "SFC|Data")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFC|Data")
     TMap<FString, int32> IntFields;
 
-    UPROPERTY(BlueprintReadWrite, Category = "SFC|Data")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFC|Data")
     TMap<FString, float> FloatFields;
 };
 
