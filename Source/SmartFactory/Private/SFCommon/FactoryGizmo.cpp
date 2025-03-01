@@ -52,9 +52,8 @@ void AFactoryGizmo::ShowDebugArea()
         EndPoint.Z+ (UpperOffsetZ+Offset.Z) * CellSize * (FloorCount-1) + UpperOffsetZ*CellSize);
 
     FVector Center = (MinPoint + MaxPoint) / 2;
-    FVector BoxExtent = (MaxPoint - MinPoint) / 2;  // BoxExtent는 절반 크기
+    FVector BoxExtent = (MaxPoint - MinPoint) / 2;
 
-    // Wireframe 모드로 박스의 모서리만 그리기
     DrawDebugBox(GetWorld(), Center, BoxExtent, FColor::Green, false, 0.1f, 0, 5.0f);
 }
 

@@ -31,7 +31,8 @@ public:
 	static USFCDataContainer* UpdateDataContainer(USFCDataContainer* InContainer, const FGenericData& InData);
 
 	// ------------------------------ UtilityFunction ------------------------------------
-
+	
+	// json string to key : "", value : "", Attributes: {"key0" : "value0", "key1" : "value1"...}
 	UFUNCTION(BlueprintCallable, Category = "SFC|DataManagement|Utility")
 	static FGenericData StringToSFCDataStruct(const FString& InString);
 

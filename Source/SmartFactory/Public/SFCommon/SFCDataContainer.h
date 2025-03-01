@@ -16,7 +16,8 @@ class SMARTFACTORY_API USFCDataContainer : public UObject
 	GENERATED_BODY()
 	
 private: 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SFC", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "SFC", 
+		meta = (AllowPrivateAccess = "true"))
 	FGenericData Data;
 
 public:
@@ -30,5 +31,4 @@ public:
 	{
 		return Data;
 	}
-
 };
