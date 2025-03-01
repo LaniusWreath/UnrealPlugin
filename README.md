@@ -8,7 +8,7 @@
   
 ## 개요 ##
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/4a0670dd-054a-4eae-ba6e-62334f25e97e" alt="플러그인00" width="90%"/>
+  <img src="https://github.com/user-attachments/assets/57ef67f7-5811-4a66-943a-d2ae89bf7fc3" alt="플러그인00" width="90%"/>
 </p>
 
 <p align="center">
